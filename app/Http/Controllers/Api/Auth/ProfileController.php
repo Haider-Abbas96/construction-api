@@ -123,4 +123,20 @@ class ProfileController extends Controller
             ], 500);
         }
     }
+
+    public function showMaterialTypes(){
+        $materialTypes = DB::table('material_types')->get();
+        if ($materialTypes->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No material types found.',
+                'data' => []
+            ], 404);
+        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Material types fetched successfully.',
+            'data' => $materialTypes
+        ]);
+    }
 }

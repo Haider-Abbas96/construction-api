@@ -1,6 +1,7 @@
 <?php
 
 
+use App\Http\Controllers\Api\Contractor\MaterialController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\ProfileController;
@@ -24,14 +25,25 @@ Route::prefix("v1")->group(function(){
             Route::post("profile/update","updateProfile");
             Route::get("profile/info","profileInfo");
             Route::get("profile/deleteAccount","deleteAccount");
+            Route::get("MaterialTypes/all","showMaterialTypes");
         });
+
     });
 
     Route::middleware(["auth:api","contractor"])->prefix("contractor")->group(function(){
-
+        Route::controller(MaterialController::class)->prefix("materials")->group(function(){
+            Route::get('/all',  'index');
+            Route::post('store',  'store');
+            Route::get('show/{id}', 'show');
+            Route::put('update/{id}',  'update');
+            Route::delete('delete/{id}',  'delete');
+        });
     });
 
     Route::middleware(["auth:api","recipient"])->prefix("recipient")->group(function(){
-
+        Route::controller(MaterialController::class)->prefix("materials")->group(function(){
+            Route::get('/all',  'allMaterials');
+            Route::get('show/{id}', 'showMaterial');
+        });
     });
 });
