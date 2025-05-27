@@ -2,6 +2,8 @@
 
 
 use App\Http\Controllers\Api\Contractor\MaterialController;
+use App\Http\Controllers\Api\Recipient\BookingController;
+use App\Models\Recipient\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\ProfileController;
@@ -42,8 +44,13 @@ Route::prefix("v1")->group(function(){
 
     Route::middleware(["auth:api","recipient"])->prefix("recipient")->group(function(){
         Route::controller(MaterialController::class)->prefix("materials")->group(function(){
-            Route::get('/all',  'allMaterials');
-            Route::get('show/{id}', 'showMaterial');
+            Route::get('/all',  'index');
+            Route::get('show/{id}', 'show');
+        });
+
+        Route::controller(BookingController::class)->prefix("booking")->group(function(){
+            Route::get('/all',  'index');
+            Route::post('store',  'store');
         });
     });
 });

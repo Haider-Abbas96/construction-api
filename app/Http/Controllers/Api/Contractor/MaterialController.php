@@ -13,13 +13,24 @@ class MaterialController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $materials = Material::where('user_id', $user->id)->latest()->get();
+        if($user->role === "contractor"){
+            $materials = Material::where('user_id', $user->id)->latest()->get();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Materials fetched successfully.',
-            'data' => $materials
-        ], 200);
+            return response()->json([
+                'success' => true,
+                'message' => 'Materials fetched successfully.',
+                'data' => $materials
+            ], 200);
+        }
+        if($user->role === "recipient"){
+            $materials = Material::latest()->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Materials fetched successfully.',
+                'data' => $materials
+            ], 200);
+        }
     }
 
      // Store a new material
@@ -78,37 +89,39 @@ class MaterialController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $material = Material::where('user_id', $user->id)->find($id);
+        if($user->role === "contractor"){
+            $material = Material::where('user_id', $user->id)->find($id);
 
-        if (!$material) {
+            if (!$material) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Material not found.'
+                ], 404);
+            }
+    
             return response()->json([
-                'success' => false,
-                'message' => 'Material not found.'
-            ], 404);
+                'success' => true,
+                'message' => 'Material details fetched.',
+                'data' => $material
+            ], 200);
         }
+        if($user->role === "recipient"){
+            $material = Material::find($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Material details fetched.',
-            'data' => $material
-        ], 200);
-    }
-
-    public function showMaterial($id){
-        $material = Material::find($id);
-
-        if (!$material) {
+            if (!$material) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Material not found.'
+                ], 404);
+            }
+    
             return response()->json([
-                'success' => false,
-                'message' => 'Material not found.'
-            ], 404);
+                'success' => true,
+                'message' => 'Material details fetched.',
+                'data' => $material
+            ], 200);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Material details fetched.',
-            'data' => $material
-        ], 200);
+ 
     }
 
      // Update a material
@@ -209,16 +222,6 @@ class MaterialController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Material deleted successfully.'
-        ], 200);
-    }
-
-    public function allMaterials(){
-        $materials = Material::latest()->get();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Materials fetched successfully.',
-            'data' => $materials
         ], 200);
     }
 
