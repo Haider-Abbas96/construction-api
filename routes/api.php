@@ -26,4 +26,12 @@ Route::prefix("v1")->group(function(){
             Route::get("profile/deleteAccount","deleteAccount");
         });
     });
+
+    Route::middleware(["auth:api","contractor"])->prefix("contractor")->group(function(){
+
+    });
+
+    Route::middleware(["auth:api","recipient"])->prefix("recipient")->group(function(){
+
+    });
 });
