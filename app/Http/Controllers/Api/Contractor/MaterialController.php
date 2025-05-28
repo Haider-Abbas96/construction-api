@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Contractor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Contractor\Material;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
@@ -43,7 +44,7 @@ class MaterialController extends Controller
             'description' => 'required|string',
             'unit' => 'required|string|max:50',
             'price_per_unit' => 'nullable|numeric|min:0',
-            "total_price" => "nullable|numeric|min:0",
+            "price" => "nullable|numeric|min:1",
             'quantity' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
          ]);
@@ -55,8 +56,11 @@ class MaterialController extends Controller
                 "errors" => $validator->errors()->all(),
             ], 422);
         } 
-         $imagePath = null;
-         if ($request->hasFile('image')) {
+        $materialTypeName = DB::table('material_types')
+            ->where('id', $request->material_type_id)
+            ->value('name');
+        $imagePath = null;
+        if ($request->hasFile('image')) {
             $file = $request->file('image');
             $filename = time() . '_' . $file->getClientOriginalName();
         
@@ -75,7 +79,8 @@ class MaterialController extends Controller
             "unit" => $request->unit,
             "price_per_unit" => $request->price_per_unit,
             "quantity" => $request->quantity ,
-            "total_price" => $request->total_price,
+            "price" => $request->price,
+            "material_type_name" => $materialTypeName
         ]);
  
          return response()->json([
@@ -143,7 +148,7 @@ class MaterialController extends Controller
             'description' => 'nullable|string',
             'unit' => 'nullable|string|max:50',
             'price_per_unit' => 'nullable|numeric|min:0',
-            "total_price" => "nullable|numeric|min:0",
+            "price" => "nullable|numeric|min:0",
             'quantity' => 'nullable|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -167,8 +172,8 @@ class MaterialController extends Controller
         if ($request->filled('price_per_unit')) {
             $material->price_per_unit = $request->price_per_unit;
         } 
-        if ($request->filled('total_price')) {
-            $material->total_price = $request->total_price;
+        if ($request->filled('price')) {
+            $material->price = $request->price;
         } 
         if ($request->filled('quantity')) {
             $material->quantity = $request->quantity;

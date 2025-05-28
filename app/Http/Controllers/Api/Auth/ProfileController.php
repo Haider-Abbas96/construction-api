@@ -29,7 +29,7 @@ class ProfileController extends Controller
         $user = Auth::user();
         $validator = Validator::make($request->all(), [
             'name' => 'nullable|string|max:255',
-            'password' => 'nullable|string|min:6|confirmed',
+            'password' => 'nullable|string|min:6',
             'phone_number' => 'nullable|string|max:20',
             'role' => 'nullable|in:recipient,contractor,admin',
             'company_name' => 'nullable|string|max:255',

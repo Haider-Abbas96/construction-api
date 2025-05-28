@@ -11,11 +11,12 @@ class Material extends Model
     protected $fillable = [
         'user_id',
         'material_type_id',
+        "material_type_name",
         'name',
         'description',
         'unit',
         'price_per_unit',
-        'total_price',
+        'price',
         'quantity',
         'image',
     ];

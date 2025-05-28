@@ -12,7 +12,13 @@ class Booking extends Model
     protected $fillable = [
         'material_id',
         'user_id',
+        "material_name",
         'unit',
+        'booking_type',
+        'quantity',
+        'address',
+        'time',
+        'date',
         'total_price',
         'status',
     ];
