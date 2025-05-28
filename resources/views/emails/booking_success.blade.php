@@ -32,6 +32,9 @@
             font-size: 13px;
             color: #6c757d;
         }
+        th{
+            text-align: left;
+        }
     </style>
 </head>
 <body>

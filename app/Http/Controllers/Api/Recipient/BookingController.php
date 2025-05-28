@@ -12,6 +12,16 @@ use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
+
+    public function index(){
+        $user = Auth::user();
+        $bookings = Booking::where("user_id",$user->id)->with('material')->latest()->get();
+        return response()->json([
+            'status' => 200,
+            'message' => 'User bookings retrieved successfully',
+            'data' => $bookings,
+        ]);
+    }
     public function store(Request $request){
         $user = Auth::user();
         $validator = Validator::make($request->all(), [
