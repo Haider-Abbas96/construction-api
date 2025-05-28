@@ -15,7 +15,23 @@ class BookingController extends Controller
 
     public function index(){
         $user = Auth::user();
-        $bookings = Booking::where("user_id",$user->id)->with('material')->latest()->get();
+        if ($user->role === 'recipient') {
+            // Bookings made by this recipient
+            $bookings = Booking::where('user_id', $user->id)
+                ->with('material')
+                ->latest()
+                ->get();
+        }
+        if($user->role === "contractor")
+        {
+            // Bookings of this contractor's materials
+            $bookings = Booking::whereHas('material', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+                })
+                ->with('material')
+                ->latest()
+                ->get();
+        }
         return response()->json([
             'status' => 200,
             'message' => 'User bookings retrieved successfully',
@@ -85,4 +101,108 @@ class BookingController extends Controller
             'data' => $booking,
         ], 201);
     }
+
+    public function show($id){
+        $user = Auth::user();
+        if($user->role === "contractor"){
+            $booking = Booking::with(['material.user', 'user'])
+                ->whereHas('material', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+                })
+                ->find($id);
+            if (!$booking) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'You are not authorized to view this booking or it does not exist',
+                ], 403);
+            }
+        }
+        if($user->role === "recipient"){
+            // Recipient: can only view their own bookings
+            $booking = Booking::with(['material.user', 'user'])
+                ->where('user_id', $user->id)
+                ->find($id);
+
+            if (!$booking) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'You are not authorized to view this booking or it does not exist',
+                ], 403);
+            }
+        }
+        if (!$booking) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Booking not found',
+            ], 404);
+        }
+
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Booking detail retrieved successfully',
+            'data' => $booking,
+        ]);
+    }
+
+    public function bookingCancellation(Request $request,$id){
+        $user = Auth::user();
+        $validator = Validator::make($request->all(), [
+            "reason" => "required|string|max:1000",
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                "status" => 422,
+                "message" => "something went wrong! Validation failed",
+                "errors" => $validator->errors()->all(),
+            ], 422);
+        }
+
+        if($user->role === "contractor"){
+            $booking = Booking::with(['material.user', 'user'])
+                ->whereHas('material', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+                })
+                ->find($id);
+            if (!$booking) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'You are not authorized to cancel this booking or it does not exist',
+                ], 403);
+            }
+        }
+        if($user->role === "recipient"){
+            // Recipient: can only view their own bookings
+            $booking = Booking::with(['material.user', 'user'])
+                ->where('user_id', $user->id)
+                ->find($id);
+
+            if (!$booking) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'You are not authorized to cancel this booking or it does not exist',
+                ], 403);
+            }
+        }
+
+        // Update the booking
+        $booking->status = 'cancelled';
+        $booking->reason = $request->reason;
+        $booking->save();
+
+        if (!$booking) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Booking not found',
+            ], 404);
+        }
+
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Booking cancelled successfully',
+            'data' => $booking,
+        ]);
+    }
+
 }

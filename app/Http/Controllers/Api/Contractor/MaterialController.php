@@ -161,6 +161,10 @@ class MaterialController extends Controller
             ], 422);
         }
         if ($request->filled('material_type_id')) {
+            $materialTypeName = DB::table('material_types')
+                ->where('id', $request->material_type_id)
+                ->value('name');
+            $material->material_type_name = $materialTypeName ;
             $material->material_type_id = $request->material_type_id;
         }
         if ($request->filled('name')) {

@@ -29,7 +29,6 @@ class ProfileController extends Controller
         $user = Auth::user();
         $validator = Validator::make($request->all(), [
             'name' => 'nullable|string|max:255',
-            'password' => 'nullable|string|min:6',
             'phone_number' => 'nullable|string|max:20',
             'role' => 'nullable|in:recipient,contractor,admin',
             'company_name' => 'nullable|string|max:255',
@@ -49,10 +48,6 @@ class ProfileController extends Controller
          // Update fields conditionally
         if ($request->filled('name')) {
             $user->name = $request->name;
-        }
-
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
         }
 
         if ($request->filled('phone_number')) {
@@ -138,5 +133,42 @@ class ProfileController extends Controller
             'message' => 'Material types fetched successfully.',
             'data' => $materialTypes
         ]);
+    }
+
+    public function changePassword(Request $request){
+        $user=Auth::user();
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized user.'
+            ], 401);
+        }
+        $validator = Validator::make($request->all(), [
+            'old_password' => 'required|string|min:6',
+            'new_password' => 'required|string|min:6|different:old_password',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+            // Check if old password matches
+        if (!Hash::check($request->old_password, $user->password)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Old password does not match.'
+            ], 403);
+        }
+
+            // Update password
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Password updated successfully.'
+        ], 200);
     }
 }

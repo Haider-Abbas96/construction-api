@@ -21,6 +21,7 @@ class Booking extends Model
         'date',
         'total_price',
         'status',
+        "reason",
     ];
 
     // Relationships

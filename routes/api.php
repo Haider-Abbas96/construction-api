@@ -27,7 +27,14 @@ Route::prefix("v1")->group(function(){
             Route::post("profile/update","updateProfile");
             Route::get("profile/info","profileInfo");
             Route::get("profile/deleteAccount","deleteAccount");
+            Route::post("profile/change-password","changePassword");
             Route::get("MaterialTypes/all","showMaterialTypes");
+        });
+
+        Route::controller(BookingController::class)->prefix("booking")->group(function(){
+            Route::get('/all',  'index');
+            Route::get('show/{id}', 'show');
+            Route::post('cancel/{id}', 'bookingCancellation');
         });
 
     });
@@ -49,7 +56,6 @@ Route::prefix("v1")->group(function(){
         });
 
         Route::controller(BookingController::class)->prefix("booking")->group(function(){
-            Route::get('/all',  'index');
             Route::post('store',  'store');
         });
     });
