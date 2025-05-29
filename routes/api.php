@@ -1,12 +1,16 @@
 <?php
 
 
+use App\Http\Controllers\Api\Chat\ChatController;
 use App\Http\Controllers\Api\Contractor\MaterialController;
 use App\Http\Controllers\Api\Recipient\BookingController;
 use App\Models\Recipient\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\ProfileController;
+use App\Models\Chat\Conversation;
+use App\Models\Chat\Message;
+use App\Events\MessageSent;
 use App\Http\Controllers\Api\Auth\AuthController;
 
 
@@ -37,6 +41,23 @@ Route::prefix("v1")->group(function(){
             Route::post('cancel/{id}', 'bookingCancellation');
         });
 
+        Route::controller(ChatController::class)->prefix("chat")->group(function(){
+            Route::post('/conversations',  'getOrCreateConversation');
+            Route::get('/conversations/{id}/messages',  'getMessages');
+            Route::post('/messages', 'sendMessage');
+            Route::post('/conversations/{id}/read',  'markAsRead');
+        });
+   
+
+        Route::post('/test-broadcast', function() {
+            $conversation = Conversation::first();
+            $message = Message::first();
+            
+            broadcast(new MessageSent($message, $conversation->id));
+            
+            return response()->json(['status' => 'Message sent']);
+        });
+
     });
 
     Route::middleware(["auth:api","contractor"])->prefix("contractor")->group(function(){
@@ -59,4 +80,6 @@ Route::prefix("v1")->group(function(){
             Route::post('store',  'store');
         });
     });
+
+
 });
