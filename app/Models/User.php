@@ -64,4 +64,10 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+
+    public function conversations()
+    {
+        return $this->belongsToMany(\App\Models\Chat\Conversation::class, 'conversation_user', 'user_id', 'conversation_id')
+                ->withTimestamps();
+    }
 }

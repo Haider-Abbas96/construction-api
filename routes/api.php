@@ -42,9 +42,10 @@ Route::prefix("v1")->group(function(){
         });
 
         Route::controller(ChatController::class)->prefix("chat")->group(function(){
-            Route::post('/conversations',  'getOrCreateConversation');
-            Route::get('/conversations/{id}/messages',  'getMessages');
-            Route::post('/messages', 'sendMessage');
+            Route::get('/conversations', 'conversations');
+            Route::post('/conversations',  'startConversation');
+            Route::get('/conversations/messages/{id}',  'messages');
+            Route::post('/conversations/messages/{conversationId}', 'sendMessage');
             Route::post('/conversations/{id}/read',  'markAsRead');
         });
    
