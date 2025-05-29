@@ -46,7 +46,7 @@ Route::prefix("v1")->group(function(){
             Route::post('/conversations',  'startConversation');
             Route::get('/conversations/messages/{id}',  'messages');
             Route::post('/conversations/messages/{conversationId}', 'sendMessage');
-            Route::post('/conversations/{id}/read',  'markAsRead');
+            Route::post('/conversations/read/{id}',  'markAsRead');
         });
    
 

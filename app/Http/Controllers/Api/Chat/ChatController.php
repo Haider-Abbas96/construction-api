@@ -195,4 +195,35 @@ class ChatController extends Controller
             ], 500);
         }
     }
+
+    public function markAsRead($messageId)
+    {
+        $userId = Auth::id();
+
+        $messageStatus = \App\Models\Chat\MessageStatus::where('message_id', $messageId)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$messageStatus) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Message status not found or not your message',
+            ], 404);
+        }
+
+        if ($messageStatus->status === 'read') {
+            return response()->json([
+                'status' => true,
+                'message' => 'Message already marked as read',
+            ]);
+        }
+
+        $messageStatus->update(['status' => 'read']);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Message marked as read',
+        ]);
+    }
+
 }
