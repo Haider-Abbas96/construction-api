@@ -27,12 +27,7 @@ class ChatController extends Controller
             }
     
             $conversations = $user->conversations()
-                ->with([
-                    'users:id,name',
-                    'messages' => function ($q) {
-                        $q->latest()->limit(1);
-                    }
-                ])
+                ->with('users:id,name') // only load users, not messages
                 ->get();
     
             return response()->json([
@@ -50,9 +45,64 @@ class ChatController extends Controller
         }
     }
 
+    public function sendMessage(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'body' => 'required|string',
+            'conversation_id' => 'required|exists:conversations,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()->all(),
+            ], 422);
+        }
+
+        $conversation = Conversation::find($request->conversation_id);
+        
+        if (!$conversation) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Conversation not found',
+            ], 404);
+        }
+        $message = Message::create([
+            'conversation_id' => $request->conversation_id,
+            'user_id' => auth()->id(),
+            'body' => $request->body,
+        ]);
+
+        // Create message status for each recipient (excluding sender)
+        foreach ($conversation->users as $user) {
+            if ($user->id !== Auth::id()) {
+                $message->statuses()->create([
+                    'user_id' => $user->id,
+                    'status' => 'delivered',
+                ]);
+            }
+        }
+
+        broadcast(new MessageSent($message, $request->conversation_id))->toOthers();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Message sent successfully',
+            'data' => $message,
+        ], 201);
+    }
+    
+
     public function messages($conversationId)
     {
-        $conversation = Conversation::with(['messages.user', 'users:id,name'])->find($conversationId);
+        $conversation = Conversation::with([
+            'users:id,name',
+            'messages' => function ($query) {
+                $query->with('user:id,name')  // Load message sender's info
+                      ->orderBy('created_at', 'asc'); // Optional: order oldest first
+            }
+        ])->find($conversationId);
     
         if (!$conversation) {
             return response()->json([
@@ -61,8 +111,8 @@ class ChatController extends Controller
             ], 404);
         }
     
-        // Check if authenticated user is part of the conversation
-        if (!$conversation->users->contains(Auth::id())) {
+        // Ensure the authenticated user is a participant
+        if (!$conversation->users->contains('id', Auth::id())) {
             return response()->json([
                 'status' => 403,
                 'message' => 'Unauthorized access to this conversation',
@@ -74,62 +124,6 @@ class ChatController extends Controller
             'message' => 'Messages retrieved successfully',
             'data' => $conversation->messages,
         ]);
-    }
-    
-
-    // Send a message
-    public function sendMessage(Request $request, $conversationId)
-    {
-        $validator = Validator::make($request->all(), [
-            'body' => 'required|string',
-        ]);
-    
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()->all(),
-            ], 422);
-        }
-    
-        $conversation = Conversation::with('users')->find($conversationId);
-    
-        if (!$conversation) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Conversation not found',
-            ], 404);
-        }
-    
-        if (!$conversation->users->contains(Auth::id())) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized access to this conversation',
-            ], 403);
-        }
-    
-        $message = Message::create([
-            'conversation_id' => $conversationId,
-            'user_id' => Auth::id(),
-            'body' => $request->body,
-        ]);
-        // Create message status for each recipient (excluding sender)
-        foreach ($conversation->users as $user) {
-            if ($user->id !== Auth::id()) {
-                $message->statuses()->create([
-                    'user_id' => $user->id,
-                    'status' => 'delivered',
-                ]);
-            }
-        }
-
-        broadcast(new MessageSent($message, $conversationId))->toOthers();
-    
-        return response()->json([
-            'status' => true,
-            'message' => 'Message sent successfully',
-            'data' => $message,
-        ], 201);
     }
     
 
@@ -194,36 +188,6 @@ class ChatController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
-    }
-
-    public function markAsRead($messageId)
-    {
-        $userId = Auth::id();
-
-        $messageStatus = \App\Models\Chat\MessageStatus::where('message_id', $messageId)
-            ->where('user_id', $userId)
-            ->first();
-
-        if (!$messageStatus) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Message status not found or not your message',
-            ], 404);
-        }
-
-        if ($messageStatus->status === 'read') {
-            return response()->json([
-                'status' => true,
-                'message' => 'Message already marked as read',
-            ]);
-        }
-
-        $messageStatus->update(['status' => 'read']);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Message marked as read',
-        ]);
     }
 
 }

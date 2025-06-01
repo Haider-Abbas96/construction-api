@@ -44,9 +44,7 @@ Route::prefix("v1")->group(function(){
         Route::controller(ChatController::class)->prefix("chat")->group(function(){
             Route::get('/conversations', 'conversations');
             Route::post('/conversations',  'startConversation');
-            Route::get('/conversations/messages/{id}',  'messages');
-            Route::post('/conversations/messages/{conversationId}', 'sendMessage');
-            Route::post('/conversations/read/{id}',  'markAsRead');
+            Route::get('/conversations/messages/{conversationId}',  'messages');
         });
    
 
